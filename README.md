@@ -15,6 +15,10 @@ An extensive Laravel plugin system that provides automatic registration of route
 -  **Performance Tracking** - Monitor memory usage, execution time, error rates, and database queries
 -  **Alert System** - Multi-channel alerts (log, email, Slack) for plugin issues
 -  **Health Commands** - Artisan commands for health checks and error management
+- 🔧 **Debug & Profiling Tools** - Comprehensive debugging tools for plugin development
+- 📊 **Performance Analysis** - Advanced profiling with bottleneck detection and recommendations
+- 📋 **Log Management** - Plugin-specific log filtering, tailing, and analysis
+- 🔍 **Request Debugging** - Middleware for request/response debugging and performance tracking
 
 ## Installation
 
@@ -327,6 +331,137 @@ Clear errors for specific plugin:
 
 ```bash
 php artisan plugin:health MyAwesomePlugin --clear-errors
+```
+
+## Plugin Debugging & Profiling Tools
+
+The plugin system includes comprehensive debugging and profiling tools to help developers analyze plugin performance, troubleshoot issues, and optimize their code.
+
+### Debug Commands
+
+#### Plugin Debug Command
+
+Monitor plugin execution with detailed debugging information:
+
+```bash
+# Debug all plugins
+php artisan plugin:debug
+
+# Debug specific plugin
+php artisan plugin:debug MyAwesomePlugin
+
+# Enable trace mode for detailed execution flow
+php artisan plugin:debug --trace
+
+# Monitor memory usage
+php artisan plugin:debug --memory
+
+# Track database queries
+php artisan plugin:debug --queries
+
+# Monitor slow queries (over 100ms)
+php artisan plugin:debug --slow-queries
+
+# Watch mode for continuous monitoring
+php artisan plugin:debug --watch
+
+# Output in JSON format
+php artisan plugin:debug --format=json
+
+# Detailed output with all information
+php artisan plugin:debug --format=detailed
+```
+
+#### Plugin Log Viewer
+
+View and manage plugin-specific logs:
+
+```bash
+# View logs for specific plugin
+php artisan plugin:logs MyAwesomePlugin
+
+# Filter by log level
+php artisan plugin:logs MyAwesomePlugin --level=error
+
+# Tail logs in real-time
+php artisan plugin:logs MyAwesomePlugin --tail
+
+# Limit number of lines
+php artisan plugin:logs MyAwesomePlugin --lines=50
+
+# Filter by date
+php artisan plugin:logs MyAwesomePlugin --since="2024-01-01"
+
+# Search for specific text
+php artisan plugin:logs MyAwesomePlugin --search="database error"
+
+# Export logs to file
+php artisan plugin:logs MyAwesomePlugin --export=logs.txt
+
+# Clear plugin logs
+php artisan plugin:logs MyAwesomePlugin --clear
+
+# Output in different formats
+php artisan plugin:logs MyAwesomePlugin --format=json
+```
+
+### Profiling Features
+
+#### Performance Analysis
+
+The profiling service provides detailed performance analysis:
+
+- **Execution Time Tracking** - Monitor method execution times
+- **Memory Usage Analysis** - Track memory consumption patterns
+- **Database Query Profiling** - Analyze query performance and N+1 issues
+- **Bottleneck Detection** - Identify performance bottlenecks automatically
+- **Performance Recommendations** - Get actionable optimization suggestions
+- **Plugin Comparison** - Compare performance across different plugins
+- **Anomaly Detection** - Detect unusual performance patterns
+
+#### Debug Middleware
+
+Enable request-level debugging by adding the middleware to your routes:
+
+```php
+Route::middleware(['plugin.debug'])->group(function () {
+    // Your plugin routes
+});
+```
+
+The middleware provides:
+
+- **Request/Response Logging** - Complete request and response data
+- **Performance Metrics** - Execution time and memory usage per request
+- **Query Tracking** - Database queries executed during request
+- **Debug Headers** - Performance data in response headers
+- **Error Tracking** - Automatic error logging and analysis
+
+### Debugging Configuration
+
+Configure debugging tools in `config/laravel-plugin-system.php`:
+
+```php
+'debugging' => [
+    'enabled' => true,
+    'profiling' => [
+        'enabled' => true,
+        'memory_tracking' => true,
+        'query_tracking' => true,
+        'slow_query_threshold' => 100, // milliseconds
+    ],
+    'logging' => [
+        'enabled' => true,
+        'log_requests' => true,
+        'log_responses' => true,
+        'sanitize_sensitive_data' => true,
+    ],
+    'cache' => [
+        'enabled' => true,
+        'ttl' => 3600, // 1 hour
+        'max_entries' => 1000,
+    ],
+],
 ```
 
 ### Health Monitoring Features

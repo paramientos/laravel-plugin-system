@@ -54,10 +54,10 @@ class PluginManager
                 continue;
             }
 
-            $serviceProviderPath = $pluginDir.'/ServiceProvider.php';
+            $serviceProviderPath = $pluginDir . '/ServiceProvider.php';
 
             if (File::exists($serviceProviderPath)) {
-                $namespace = $this->getPluginNamespace($pluginName).'\\ServiceProvider';
+                $namespace = $this->getPluginNamespace($pluginName) . '\\ServiceProvider';
 
                 if (class_exists($namespace)) {
                     $serviceProvider = new $namespace($this->app);
@@ -75,6 +75,8 @@ class PluginManager
         return [
             Commands\MakePluginCommand::class,
             Commands\PluginHealthCommand::class,
+            Commands\PluginDebugCommand::class,
+            Commands\PluginLogViewerCommand::class,
         ];
     }
 
@@ -93,7 +95,7 @@ class PluginManager
                 continue;
             }
 
-            $commandsPath = $pluginDir.'/Commands';
+            $commandsPath = $pluginDir . '/Commands';
 
             if (File::exists($commandsPath)) {
                 $commandFiles = File::files($commandsPath);
@@ -104,7 +106,7 @@ class PluginManager
                     }
 
                     $commandName = $commandFile->getFilenameWithoutExtension();
-                    $namespace = $this->getPluginNamespace($pluginName)."\\Commands\\{$commandName}";
+                    $namespace = $this->getPluginNamespace($pluginName) . "\\Commands\\{$commandName}";
 
                     if (class_exists($namespace)) {
                         $commandInstance = $this->app->make($namespace);
@@ -130,8 +132,8 @@ class PluginManager
                 continue;
             }
 
-            $eventsPath = $pluginDir.'/Events';
-            $listenersPath = $pluginDir.'/Listeners';
+            $eventsPath = $pluginDir . '/Events';
+            $listenersPath = $pluginDir . '/Listeners';
 
             if (File::exists($eventsPath) && File::exists($listenersPath)) {
                 $eventFiles = File::files($eventsPath);
@@ -143,7 +145,7 @@ class PluginManager
                     }
 
                     $eventName = $eventFile->getFilenameWithoutExtension();
-                    $eventNamespace = $this->getPluginNamespace($pluginName)."\\Events\\{$eventName}";
+                    $eventNamespace = $this->getPluginNamespace($pluginName) . "\\Events\\{$eventName}";
 
                     foreach ($listenerFiles as $listenerFile) {
                         if ($listenerFile->getExtension() !== 'php') {
@@ -151,7 +153,7 @@ class PluginManager
                         }
 
                         $listenerName = $listenerFile->getFilenameWithoutExtension();
-                        $listenerNamespace = $this->getPluginNamespace($pluginName)."\\Listeners\\{$listenerName}";
+                        $listenerNamespace = $this->getPluginNamespace($pluginName) . "\\Listeners\\{$listenerName}";
 
                         if (class_exists($eventNamespace) && class_exists($listenerNamespace)) {
                             Event::listen($eventNamespace, $listenerNamespace);
@@ -177,7 +179,7 @@ class PluginManager
                 continue;
             }
 
-            $servicesPath = $pluginDir.'/Services';
+            $servicesPath = $pluginDir . '/Services';
 
             if (File::exists($servicesPath)) {
                 $serviceFiles = File::files($servicesPath);
@@ -189,12 +191,12 @@ class PluginManager
 
                     $pluginName = basename($pluginDir);
                     $serviceName = $serviceFile->getFilenameWithoutExtension();
-                    $namespace = $this->getPluginNamespace($pluginName)."\\Services\\{$serviceName}";
+                    $namespace = $this->getPluginNamespace($pluginName) . "\\Services\\{$serviceName}";
 
                     if (class_exists($namespace)) {
                         $this->app->singleton($namespace, $namespace);
 
-                        $interfaceName = $this->getPluginNamespace($pluginName)."\\Services\\{$serviceName}Interface";
+                        $interfaceName = $this->getPluginNamespace($pluginName) . "\\Services\\{$serviceName}Interface";
 
                         if (interface_exists($interfaceName)) {
                             $this->app->bind($interfaceName, $namespace);
@@ -220,7 +222,7 @@ class PluginManager
                 continue;
             }
 
-            $viewsPath = $pluginDir.'/Views';
+            $viewsPath = $pluginDir . '/Views';
 
             if (File::exists($viewsPath)) {
                 $pluginName = strtolower($pluginName);
@@ -237,7 +239,7 @@ class PluginManager
 
     protected function isPluginEnabled(string $pluginName): bool
     {
-        return (bool) config("{$pluginName}.enabled");
+        return (bool)config("{$pluginName}.enabled");
     }
 
     protected function registerPluginConfigs(): void
@@ -249,7 +251,7 @@ class PluginManager
         $pluginDirectories = File::directories($this->pluginsPath);
 
         foreach ($pluginDirectories as $pluginDir) {
-            $configFile = $pluginDir.'/config.php';
+            $configFile = $pluginDir . '/config.php';
 
             if (File::exists($configFile)) {
                 $pluginName = basename($pluginDir);
@@ -277,7 +279,7 @@ class PluginManager
                 continue;
             }
 
-            $routesFile = $pluginDir.'/routes.php';
+            $routesFile = $pluginDir . '/routes.php';
 
             if (File::exists($routesFile)) {
                 $pluginName = strtolower($pluginName);
@@ -308,7 +310,7 @@ class PluginManager
                 continue;
             }
 
-            $controllersPath = $pluginDir.'/Controllers';
+            $controllersPath = $pluginDir . '/Controllers';
 
             if (File::exists($controllersPath)) {
                 $controllerFiles = File::files($controllersPath);
@@ -319,7 +321,7 @@ class PluginManager
                     }
 
                     $controllerName = $controllerFile->getFilenameWithoutExtension();
-                    $namespace = $this->getPluginNamespace($pluginName)."\\Controllers\\{$controllerName}";
+                    $namespace = $this->getPluginNamespace($pluginName) . "\\Controllers\\{$controllerName}";
 
                     if (class_exists($namespace)) {
                         $this->app->bind($namespace, $namespace);
@@ -331,6 +333,6 @@ class PluginManager
 
     protected function getPluginNamespace(string $pluginName): string
     {
-        return config('laravel-plugin-system.plugin_namespace', 'App\\Plugins')."\\{$pluginName}";
+        return config('laravel-plugin-system.plugin_namespace', 'App\\Plugins') . "\\{$pluginName}";
     }
 }

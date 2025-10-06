@@ -4,10 +4,14 @@ namespace SoysalTan\LaravelPluginSystem;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\ServiceProvider;
+use SoysalTan\LaravelPluginSystem\Commands\PluginDebugCommand;
+use SoysalTan\LaravelPluginSystem\Commands\PluginLogViewerCommand;
 use SoysalTan\LaravelPluginSystem\Contracts\PluginHealthMonitorInterface;
+use SoysalTan\LaravelPluginSystem\Middleware\PluginDebugMiddleware;
 use SoysalTan\LaravelPluginSystem\Middleware\PluginHealthCollector;
 use SoysalTan\LaravelPluginSystem\Services\PluginHealthAlertSystem;
 use SoysalTan\LaravelPluginSystem\Services\PluginHealthMonitor;
+use SoysalTan\LaravelPluginSystem\Services\PluginProfilingService;
 
 class LaravelPluginSystemServiceProvider extends ServiceProvider
 {
@@ -29,10 +33,19 @@ class LaravelPluginSystemServiceProvider extends ServiceProvider
         $this->app->singleton(PluginHealthAlertSystem::class);
         $this->app->singleton(PluginHealthCollector::class);
 
+        // Register debugging and profiling services
+        $this->app->singleton(PluginProfilingService::class);
+        $this->app->singleton(PluginDebugMiddleware::class);
+
         $pluginManager = $this->app->make(PluginManager::class);
         $pluginManager->register();
 
-        $this->commands($pluginManager->getRegisteredCommands());
+        // Register all commands
+        $commands = array_merge(
+            $pluginManager->getRegisteredCommands()
+        );
+
+        $this->commands($commands);
     }
 
     public function boot(): void
@@ -44,7 +57,8 @@ class LaravelPluginSystemServiceProvider extends ServiceProvider
         $pluginManager = $this->app->make(PluginManager::class);
         $pluginManager->boot();
 
-        // Register middleware if health monitoring is enabled
+        // Register middleware
         $this->app['router']->aliasMiddleware('plugin.health', PluginHealthCollector::class);
+        $this->app['router']->aliasMiddleware('plugin.debug', PluginDebugMiddleware::class);
     }
 }

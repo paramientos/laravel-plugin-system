@@ -56,6 +56,11 @@ class MakePluginCommand extends Command
             $pluginPath . '/Controllers',
             $pluginPath . '/Services',
             $pluginPath . '/Views',
+            $pluginPath . '/Commands',
+            $pluginPath . '/Events',
+            $pluginPath . '/Listeners',
+            $pluginPath . '/Enums',
+            $pluginPath . '/Concerns',
         ];
 
         foreach ($directories as $directory) {
@@ -105,6 +110,11 @@ class MakePluginCommand extends Command
         $this->createControllerFile($pluginPath, $pluginName);
         $this->createServiceFile($pluginPath, $pluginName);
         $this->createViewFile($pluginPath, $pluginName, $viewType);
+        $this->createCommandFile($pluginPath, $pluginName);
+        $this->createEventFile($pluginPath, $pluginName);
+        $this->createListenerFile($pluginPath, $pluginName);
+        $this->createEnumFile($pluginPath, $pluginName);
+        $this->createConcernFile($pluginPath, $pluginName);
     }
 
     protected function createConfigFile(string $pluginPath, string $pluginName): void
@@ -260,5 +270,169 @@ new class extends \\Livewire\\Volt\\Component
 
         File::put($pluginPath . '/Views/index.blade.php', $content);
         $this->line("Created: index.blade.php ({$viewType})");
+    }
+
+    protected function createCommandFile(string $pluginPath, string $pluginName): void
+    {
+        $namespace = config('laravel-plugin-system.plugin_namespace', 'App\\Plugins');
+        $content = "<?php
+
+namespace {$namespace}\\{$pluginName}\\Commands;
+
+use Illuminate\\Console\\Command;
+
+class {$pluginName}Command extends Command
+{
+    protected \$signature = '{$pluginName}:example {--option= : Example option}';
+
+    protected \$description = 'Example command for {$pluginName} plugin';
+
+    public function handle()
+    {
+        \$this->info('{$pluginName} command executed successfully!');
+        
+        if (\$option = \$this->option('option')) {
+            \$this->line(\"Option value: {\$option}\");
+        }
+
+        return self::SUCCESS;
+    }
+}
+";
+        File::put($pluginPath . '/Commands/' . $pluginName . 'Command.php', $content);
+        $this->line("Created: {$pluginName}Command.php");
+    }
+
+    protected function createEventFile(string $pluginPath, string $pluginName): void
+    {
+        $namespace = config('laravel-plugin-system.plugin_namespace', 'App\\Plugins');
+        $content = "<?php
+
+namespace {$namespace}\\{$pluginName}\\Events;
+
+use Illuminate\\Broadcasting\\InteractsWithSockets;
+use Illuminate\\Foundation\\Events\\Dispatchable;
+use Illuminate\\Queue\\SerializesModels;
+
+class {$pluginName}Event
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(
+        public readonly string \$message,
+        public readonly array \$data = []
+    ) {
+    }
+}
+";
+        File::put($pluginPath . '/Events/' . $pluginName . 'Event.php', $content);
+        $this->line("Created: {$pluginName}Event.php");
+    }
+
+    protected function createListenerFile(string $pluginPath, string $pluginName): void
+    {
+        $namespace = config('laravel-plugin-system.plugin_namespace', 'App\\Plugins');
+        $content = "<?php
+
+namespace {$namespace}\\{$pluginName}\\Listeners;
+
+use {$namespace}\\{$pluginName}\\Events\\{$pluginName}Event;
+use Illuminate\\Contracts\\Queue\\ShouldQueue;
+use Illuminate\\Queue\\InteractsWithQueue;
+
+class {$pluginName}Listener implements ShouldQueue
+{
+    use InteractsWithQueue;
+
+    public function handle({$pluginName}Event \$event): void
+    {
+        logger('{$pluginName} event handled', [
+            'message' => \$event->message,
+            'data' => \$event->data,
+        ]);
+    }
+}
+";
+        File::put($pluginPath . '/Listeners/' . $pluginName . 'Listener.php', $content);
+        $this->line("Created: {$pluginName}Listener.php");
+    }
+
+    protected function createEnumFile(string $pluginPath, string $pluginName): void
+    {
+        $namespace = config('laravel-plugin-system.plugin_namespace', 'App\\Plugins');
+        $content = "<?php
+
+namespace {$namespace}\\{$pluginName}\\Enums;
+
+enum {$pluginName}Status: string
+{
+    case ACTIVE = 'active';
+    case INACTIVE = 'inactive';
+    case PENDING = 'pending';
+    case DISABLED = 'disabled';
+
+    public function label(): string
+    {
+        return match(\$this) {
+            self::ACTIVE => 'Active',
+            self::INACTIVE => 'Inactive',
+            self::PENDING => 'Pending',
+            self::DISABLED => 'Disabled',
+        };
+    }
+
+    public function color(): string
+    {
+        return match(\$this) {
+            self::ACTIVE => 'green',
+            self::INACTIVE => 'gray',
+            self::PENDING => 'yellow',
+            self::DISABLED => 'red',
+        };
+    }
+}
+";
+        File::put($pluginPath . '/Enums/' . $pluginName . 'Status.php', $content);
+        $this->line("Created: {$pluginName}Status.php");
+    }
+
+    protected function createConcernFile(string $pluginPath, string $pluginName): void
+    {
+        $namespace = config('laravel-plugin-system.plugin_namespace', 'App\\Plugins');
+        $content = "<?php
+
+namespace {$namespace}\\{$pluginName}\\Concerns;
+
+trait Has{$pluginName}Features
+{
+    public function get{$pluginName}Info(): array
+    {
+        return [
+            'plugin_name' => '{$pluginName}',
+            'version' => '1.0.0',
+            'status' => 'active',
+            'created_at' => now()->toISOString(),
+        ];
+    }
+
+    public function is{$pluginName}Active(): bool
+    {
+        return (bool)config('{$pluginName}.enabled', false);
+    }
+
+    public function get{$pluginName}Config(?string \$key = null, mixed \$default = null): mixed
+    {
+        \$config = config('{$pluginName}', []);
+        
+        if (\$key === null) {
+            return \$config;
+        }
+
+        return data_get(\$config, \$key, \$default);
+    }
+}
+";
+        File::put($pluginPath . '/Concerns/Has' . $pluginName . 'Features.php', $content);
+        $this->line("Created: Has{$pluginName}Features.php");
     }
 }

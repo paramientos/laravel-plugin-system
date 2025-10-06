@@ -6,12 +6,14 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
-use Livewire\Volt\Volt;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Console\Scheduling\Schedule;
+use SoysalTan\LaravelPluginSystem\Contracts\PluginLifecycleInterface;
 
 class PluginManager
 {
     public static bool $usePluginsPrefixInRoutes = false;
-    
+
     protected string $pluginsPath;
     protected Application $app;
 
@@ -25,6 +27,7 @@ class PluginManager
     {
         $this->registerPluginConfigs();
         $this->registerPluginServices();
+        $this->callLifecycleHook('onRegister');
     }
 
     public function boot(): void
@@ -32,13 +35,131 @@ class PluginManager
         $this->registerPluginViews();
         $this->registerPluginRoutes();
         $this->registerPluginControllers();
+        $this->registerPluginCommands();
+        $this->registerPluginEvents();
+        $this->callLifecycleHook('onBoot');
     }
 
-    public function registerPluginCommands(): array
+    protected function callLifecycleHook(string $method): void
+    {
+        if (!File::exists($this->pluginsPath)) {
+            return;
+        }
+
+        $pluginDirectories = File::directories($this->pluginsPath);
+
+        foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
+            $serviceProviderPath = $pluginDir . '/ServiceProvider.php';
+
+            if (File::exists($serviceProviderPath)) {
+                $namespace = $this->getPluginNamespace($pluginName) . '\\ServiceProvider';
+
+                if (class_exists($namespace)) {
+                    $serviceProvider = new $namespace($this->app);
+
+                    if (method_exists($serviceProvider, $method)) {
+                        $serviceProvider->$method();
+                    }
+                }
+            }
+        }
+    }
+
+    public function getRegisteredCommands(): array
     {
         return [
             Commands\MakePluginCommand::class,
         ];
+    }
+
+    protected function registerPluginCommands(): void
+    {
+        if (!File::exists($this->pluginsPath)) {
+            return;
+        }
+
+        $pluginDirectories = File::directories($this->pluginsPath);
+
+        foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
+            $commandsPath = $pluginDir . '/Commands';
+
+            if (File::exists($commandsPath)) {
+                $commandFiles = File::files($commandsPath);
+
+                foreach ($commandFiles as $commandFile) {
+                    if ($commandFile->getExtension() !== 'php') {
+                        continue;
+                    }
+
+                    $commandName = $commandFile->getFilenameWithoutExtension();
+                    $namespace = $this->getPluginNamespace($pluginName) . "\\Commands\\{$commandName}";
+
+                    if (class_exists($namespace)) {
+                        $commandInstance = $this->app->make($namespace);
+                        $this->app['Illuminate\Contracts\Console\Kernel']->registerCommand($commandInstance);
+                    }
+                }
+            }
+        }
+    }
+
+    protected function registerPluginEvents(): void
+    {
+        if (!File::exists($this->pluginsPath)) {
+            return;
+        }
+
+        $pluginDirectories = File::directories($this->pluginsPath);
+
+        foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
+            $eventsPath = $pluginDir . '/Events';
+            $listenersPath = $pluginDir . '/Listeners';
+
+            if (File::exists($eventsPath) && File::exists($listenersPath)) {
+                $eventFiles = File::files($eventsPath);
+                $listenerFiles = File::files($listenersPath);
+
+                foreach ($eventFiles as $eventFile) {
+                    if ($eventFile->getExtension() !== 'php') {
+                        continue;
+                    }
+
+                    $eventName = $eventFile->getFilenameWithoutExtension();
+                    $eventNamespace = $this->getPluginNamespace($pluginName) . "\\Events\\{$eventName}";
+
+                    foreach ($listenerFiles as $listenerFile) {
+                        if ($listenerFile->getExtension() !== 'php') {
+                            continue;
+                        }
+
+                        $listenerName = $listenerFile->getFilenameWithoutExtension();
+                        $listenerNamespace = $this->getPluginNamespace($pluginName) . "\\Listeners\\{$listenerName}";
+
+                        if (class_exists($eventNamespace) && class_exists($listenerNamespace)) {
+                            Event::listen($eventNamespace, $listenerNamespace);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     protected function registerPluginServices(): void
@@ -50,6 +171,12 @@ class PluginManager
         $pluginDirectories = File::directories($this->pluginsPath);
 
         foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
             $servicesPath = $pluginDir . '/Services';
 
             if (File::exists($servicesPath)) {
@@ -87,20 +214,30 @@ class PluginManager
         $pluginDirectories = File::directories($this->pluginsPath);
 
         foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
             $viewsPath = $pluginDir . '/Views';
 
             if (File::exists($viewsPath)) {
-                $pluginName = strtolower(basename($pluginDir));
+                $pluginName = strtolower($pluginName);
 
                 View::addLocation($viewsPath);
                 View::addNamespace("plugins.{$pluginName}", $viewsPath);
 
-                // Only mount Volt if enabled and Volt class exists
-                if (config('laravel-plugin-system.enable_volt_support', true) && class_exists('Livewire\Volt\Volt')) {
-                    Volt::mount($viewsPath);
+                if (config('laravel-plugin-system.enable_volt_support', true) && class_exists('Livewire\\Volt\\Volt')) {
+                    call_user_func(['Livewire\\Volt\\Volt', 'mount'], $viewsPath);
                 }
             }
         }
+    }
+
+    protected function isPluginEnabled(string $pluginName): bool
+    {
+        return (bool)config("{$pluginName}.enabled");
     }
 
     protected function registerPluginConfigs(): void
@@ -134,10 +271,16 @@ class PluginManager
         $pluginDirectories = File::directories($this->pluginsPath);
 
         foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
             $routesFile = $pluginDir . '/routes.php';
 
             if (File::exists($routesFile)) {
-                $pluginName = strtolower(basename($pluginDir));
+                $pluginName = strtolower($pluginName);
 
                 $prefix = self::$usePluginsPrefixInRoutes
                     ? "plugins/{$pluginName}"
@@ -159,6 +302,12 @@ class PluginManager
         $pluginDirectories = File::directories($this->pluginsPath);
 
         foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
             $controllersPath = $pluginDir . '/Controllers';
 
             if (File::exists($controllersPath)) {
@@ -169,7 +318,6 @@ class PluginManager
                         continue;
                     }
 
-                    $pluginName = basename($pluginDir);
                     $controllerName = $controllerFile->getFilenameWithoutExtension();
                     $namespace = $this->getPluginNamespace($pluginName) . "\\Controllers\\{$controllerName}";
 

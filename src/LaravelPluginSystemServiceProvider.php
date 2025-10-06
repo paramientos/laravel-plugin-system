@@ -18,7 +18,7 @@ class LaravelPluginSystemServiceProvider extends ServiceProvider
         $pluginManager = $this->app->make(PluginManager::class);
         $pluginManager->register();
 
-        $this->commands($pluginManager->registerPluginCommands());
+        $this->commands($pluginManager->getRegisteredCommands());
     }
 
     public function boot(): void

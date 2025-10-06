@@ -2,17 +2,18 @@
 
 namespace SoysalTan\LaravelPluginSystem\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Cache;
-use SoysalTan\LaravelPluginSystem\Services\PluginHealthMonitor;
 
 class PluginHealthAlertSystem
 {
     protected PluginHealthMonitor $healthMonitor;
+
     protected array $alertChannels;
+
     protected array $alertThresholds;
+
     protected string $cachePrefix = 'plugin_alert_';
 
     public function __construct(PluginHealthMonitor $healthMonitor)
@@ -106,30 +107,32 @@ class PluginHealthAlertSystem
         }
 
         // Memory usage alert
-        if ($metrics['memory_usage'] > $this->alertThresholds['memory_threshold']) {
+        $memoryUsage = $metrics['memory_usage'] ?? 0;
+        if ($memoryUsage > $this->alertThresholds['memory_threshold']) {
             $alerts[] = [
                 'type' => 'high_memory_usage',
                 'severity' => 'warning',
                 'plugin' => $pluginName,
                 'title' => "High Memory Usage in Plugin {$pluginName}",
-                'message' => "Plugin {$pluginName} is using " . $this->formatBytes($metrics['memory_usage']) . " of memory.",
+                'message' => "Plugin {$pluginName} is using ".$this->formatBytes($memoryUsage).' of memory.',
                 'details' => [
-                    'memory_usage' => $metrics['memory_usage'],
+                    'memory_usage' => $memoryUsage,
                     'threshold' => $this->alertThresholds['memory_threshold'],
                 ],
             ];
         }
 
         // Response time alert
-        if ($metrics['response_time'] > $this->alertThresholds['response_time_threshold']) {
+        $responseTime = $metrics['response_time'] ?? 0;
+        if ($responseTime > $this->alertThresholds['response_time_threshold']) {
             $alerts[] = [
                 'type' => 'slow_response_time',
                 'severity' => 'warning',
                 'plugin' => $pluginName,
                 'title' => "Slow Response Time in Plugin {$pluginName}",
-                'message' => "Plugin {$pluginName} has an average response time of {$metrics['response_time']}ms.",
+                'message' => "Plugin {$pluginName} has an average response time of {$responseTime}ms.",
                 'details' => [
-                    'response_time' => $metrics['response_time'],
+                    'response_time' => $responseTime,
                     'threshold' => $this->alertThresholds['response_time_threshold'],
                 ],
             ];
@@ -186,7 +189,7 @@ class PluginHealthAlertSystem
 
     protected function shouldSendAlert(string $pluginName, string $alertType): bool
     {
-        $cacheKey = $this->cachePrefix . $pluginName . '_' . $alertType;
+        $cacheKey = $this->cachePrefix.$pluginName.'_'.$alertType;
         $lastSent = Cache::get($cacheKey);
 
         if (!$lastSent) {
@@ -199,14 +202,14 @@ class PluginHealthAlertSystem
 
     protected function recordAlertSent(string $pluginName, string $alertType): void
     {
-        $cacheKey = $this->cachePrefix . $pluginName . '_' . $alertType;
+        $cacheKey = $this->cachePrefix.$pluginName.'_'.$alertType;
         Cache::put($cacheKey, now(), now()->addHours(2));
     }
 
     protected function sendAlert(array $alert): void
     {
         foreach ($this->alertChannels as $channel) {
-            match($channel) {
+            match ($channel) {
                 'log' => $this->sendLogAlert($alert),
                 'email' => $this->sendEmailAlert($alert),
                 'slack' => $this->sendSlackAlert($alert),
@@ -218,7 +221,7 @@ class PluginHealthAlertSystem
 
     protected function sendLogAlert(array $alert): void
     {
-        $logLevel = match($alert['severity']) {
+        $logLevel = match ($alert['severity']) {
             'critical' => 'critical',
             'warning' => 'warning',
             default => 'info',
@@ -243,7 +246,7 @@ class PluginHealthAlertSystem
         try {
             Mail::send('plugin-health-alert', $alert, function ($message) use ($alert, $recipients) {
                 $message->to($recipients)
-                        ->subject($alert['title']);
+                    ->subject($alert['title']);
             });
         } catch (\Exception $e) {
             Log::error('Failed to send health alert email', [
@@ -261,7 +264,7 @@ class PluginHealthAlertSystem
             return;
         }
 
-        $color = match($alert['severity']) {
+        $color = match ($alert['severity']) {
             'critical' => 'danger',
             'warning' => 'warning',
             default => 'good',
@@ -342,6 +345,6 @@ class PluginHealthAlertSystem
 
         $bytes /= (1 << (10 * $pow));
 
-        return round($bytes, 2) . ' ' . $units[$pow];
+        return round($bytes, 2).' '.$units[$pow];
     }
 }

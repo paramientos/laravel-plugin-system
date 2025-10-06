@@ -2,10 +2,10 @@
 
 namespace SoysalTan\LaravelPluginSystem\Commands;
 
-use SoysalTan\LaravelPluginSystem\PluginManager;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use SoysalTan\LaravelPluginSystem\PluginManager;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class MakePluginCommand extends Command
@@ -20,10 +20,11 @@ class MakePluginCommand extends Command
         $pluginName = Str::studly($pluginName);
 
         $pluginsPath = config('laravel-plugin-system.plugins_path', app_path('Plugins'));
-        $pluginPath = $pluginsPath . "/{$pluginName}";
+        $pluginPath = $pluginsPath."/{$pluginName}";
 
         if (File::exists($pluginPath)) {
             $this->error("Plugin '{$pluginName}' already exists!");
+
             return CommandAlias::FAILURE;
         }
 
@@ -53,19 +54,19 @@ class MakePluginCommand extends Command
     {
         $directories = [
             $pluginPath,
-            $pluginPath . '/Controllers',
-            $pluginPath . '/Services',
-            $pluginPath . '/Views',
-            $pluginPath . '/Commands',
-            $pluginPath . '/Events',
-            $pluginPath . '/Listeners',
-            $pluginPath . '/Enums',
-            $pluginPath . '/Concerns',
+            $pluginPath.'/Controllers',
+            $pluginPath.'/Services',
+            $pluginPath.'/Views',
+            $pluginPath.'/Commands',
+            $pluginPath.'/Events',
+            $pluginPath.'/Listeners',
+            $pluginPath.'/Enums',
+            $pluginPath.'/Concerns',
         ];
 
         foreach ($directories as $directory) {
             File::makeDirectory($directory, 0755, true);
-            $this->line("Created directory: " . basename($directory));
+            $this->line('Created directory: '.basename($directory));
         }
     }
 
@@ -95,7 +96,7 @@ class MakePluginCommand extends Command
             $voltExists = class_exists('Livewire\Volt\Volt');
 
             if (!$voltEnabled || !$voltExists) {
-                $this->error("Volt is not available. Please install Livewire Volt or use --view-type=blade");
+                $this->error('Volt is not available. Please install Livewire Volt or use --view-type=blade');
                 exit(1);
             }
         }
@@ -128,8 +129,8 @@ return [
     'enabled' => true,
 ];
 ";
-        File::put($pluginPath . '/config.php', $content);
-        $this->line("Created: config.php");
+        File::put($pluginPath.'/config.php', $content);
+        $this->line('Created: config.php');
     }
 
     protected function createRoutesFile(string $pluginPath, string $pluginName, string $viewType): void
@@ -153,8 +154,8 @@ Route::get('/', function () {
 ";
         }
 
-        File::put($pluginPath . '/routes.php', $content);
-        $this->line("Created: routes.php");
+        File::put($pluginPath.'/routes.php', $content);
+        $this->line('Created: routes.php');
     }
 
     protected function createControllerFile(string $pluginPath, string $pluginName): void
@@ -174,7 +175,7 @@ class {$pluginName}Controller extends Controller
     }
 }
 ";
-        File::put($pluginPath . '/Controllers/' . $pluginName . 'Controller.php', $content);
+        File::put($pluginPath.'/Controllers/'.$pluginName.'Controller.php', $content);
         $this->line("Created: {$pluginName}Controller.php");
     }
 
@@ -208,8 +209,8 @@ class {$pluginName}Service implements {$pluginName}ServiceInterface
 }
 ";
 
-        File::put($pluginPath . '/Services/' . $pluginName . 'ServiceInterface.php', $interfaceContent);
-        File::put($pluginPath . '/Services/' . $pluginName . 'Service.php', $serviceContent);
+        File::put($pluginPath.'/Services/'.$pluginName.'ServiceInterface.php', $interfaceContent);
+        File::put($pluginPath.'/Services/'.$pluginName.'Service.php', $serviceContent);
 
         $this->line("Created: {$pluginName}ServiceInterface.php");
         $this->line("Created: {$pluginName}Service.php");
@@ -268,7 +269,7 @@ new class extends \\Livewire\\Volt\\Component
 ";
         }
 
-        File::put($pluginPath . '/Views/index.blade.php', $content);
+        File::put($pluginPath.'/Views/index.blade.php', $content);
         $this->line("Created: index.blade.php ({$viewType})");
     }
 
@@ -299,7 +300,7 @@ class {$pluginName}Command extends Command
     }
 }
 ";
-        File::put($pluginPath . '/Commands/' . $pluginName . 'Command.php', $content);
+        File::put($pluginPath.'/Commands/'.$pluginName.'Command.php', $content);
         $this->line("Created: {$pluginName}Command.php");
     }
 
@@ -325,7 +326,7 @@ class {$pluginName}Event
     }
 }
 ";
-        File::put($pluginPath . '/Events/' . $pluginName . 'Event.php', $content);
+        File::put($pluginPath.'/Events/'.$pluginName.'Event.php', $content);
         $this->line("Created: {$pluginName}Event.php");
     }
 
@@ -353,7 +354,7 @@ class {$pluginName}Listener implements ShouldQueue
     }
 }
 ";
-        File::put($pluginPath . '/Listeners/' . $pluginName . 'Listener.php', $content);
+        File::put($pluginPath.'/Listeners/'.$pluginName.'Listener.php', $content);
         $this->line("Created: {$pluginName}Listener.php");
     }
 
@@ -392,7 +393,7 @@ enum {$pluginName}Status: string
     }
 }
 ";
-        File::put($pluginPath . '/Enums/' . $pluginName . 'Status.php', $content);
+        File::put($pluginPath.'/Enums/'.$pluginName.'Status.php', $content);
         $this->line("Created: {$pluginName}Status.php");
     }
 
@@ -432,7 +433,7 @@ trait Has{$pluginName}Features
     }
 }
 ";
-        File::put($pluginPath . '/Concerns/Has' . $pluginName . 'Features.php', $content);
+        File::put($pluginPath.'/Concerns/Has'.$pluginName.'Features.php', $content);
         $this->line("Created: Has{$pluginName}Features.php");
     }
 }

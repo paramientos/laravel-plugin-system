@@ -3,7 +3,6 @@
 namespace SoysalTan\LaravelPluginSystem\Tests\Unit;
 
 use Illuminate\Support\Facades\File;
-use SoysalTan\LaravelPluginSystem\Commands\MakePluginCommand;
 use SoysalTan\LaravelPluginSystem\Tests\TestCase;
 
 class MakePluginCommandTest extends TestCase
@@ -22,19 +21,19 @@ class MakePluginCommandTest extends TestCase
             ->expectsOutputToContain('Plugin \'TestPlugin\' created successfully!')
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/TestPlugin';
+        $pluginPath = $this->getTestPluginsPath().'/TestPlugin';
 
         $this->assertDirectoryExists($pluginPath);
-        $this->assertDirectoryExists($pluginPath . '/Controllers');
-        $this->assertDirectoryExists($pluginPath . '/Services');
-        $this->assertDirectoryExists($pluginPath . '/Views');
+        $this->assertDirectoryExists($pluginPath.'/Controllers');
+        $this->assertDirectoryExists($pluginPath.'/Services');
+        $this->assertDirectoryExists($pluginPath.'/Views');
 
-        $this->assertFileExists($pluginPath . '/config.php');
-        $this->assertFileExists($pluginPath . '/routes.php');
-        $this->assertFileExists($pluginPath . '/Controllers/TestPluginController.php');
-        $this->assertFileExists($pluginPath . '/Services/TestPluginService.php');
-        $this->assertFileExists($pluginPath . '/Services/TestPluginServiceInterface.php');
-        $this->assertFileExists($pluginPath . '/Views/index.blade.php');
+        $this->assertFileExists($pluginPath.'/config.php');
+        $this->assertFileExists($pluginPath.'/routes.php');
+        $this->assertFileExists($pluginPath.'/Controllers/TestPluginController.php');
+        $this->assertFileExists($pluginPath.'/Services/TestPluginService.php');
+        $this->assertFileExists($pluginPath.'/Services/TestPluginServiceInterface.php');
+        $this->assertFileExists($pluginPath.'/Views/index.blade.php');
     }
 
     public function test_creates_plugin_with_volt_view_type()
@@ -43,14 +42,14 @@ class MakePluginCommandTest extends TestCase
 
         $this->artisan('make:plugin', [
             'name' => 'VoltPlugin',
-            '--view-type' => 'volt'
+            '--view-type' => 'volt',
         ])
             ->expectsOutputToContain('Creating plugin: VoltPlugin')
             ->expectsOutputToContain('View type: volt')
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/VoltPlugin';
-        $viewContent = File::get($pluginPath . '/Views/index.blade.php');
+        $pluginPath = $this->getTestPluginsPath().'/VoltPlugin';
+        $viewContent = File::get($pluginPath.'/Views/index.blade.php');
 
         $this->assertStringContainsString('Livewire\\Volt\\Component', $viewContent);
         $this->assertStringContainsString('Welcome to VoltPlugin Plugin!', $viewContent);
@@ -60,14 +59,14 @@ class MakePluginCommandTest extends TestCase
     {
         $this->artisan('make:plugin', [
             'name' => 'BladePlugin',
-            '--view-type' => 'blade'
+            '--view-type' => 'blade',
         ])
             ->expectsOutputToContain('Creating plugin: BladePlugin')
             ->expectsOutputToContain('View type: blade')
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/BladePlugin';
-        $viewContent = File::get($pluginPath . '/Views/index.blade.php');
+        $pluginPath = $this->getTestPluginsPath().'/BladePlugin';
+        $viewContent = File::get($pluginPath.'/Views/index.blade.php');
 
         $this->assertStringContainsString('@extends(\'layouts.app\')', $viewContent);
         $this->assertStringContainsString('Welcome to BladePlugin Plugin!', $viewContent);
@@ -77,12 +76,12 @@ class MakePluginCommandTest extends TestCase
     {
         config([
             'laravel-plugin-system.default_view_type' => 'volt',
-            'laravel-plugin-system.enable_volt_support' => true
+            'laravel-plugin-system.enable_volt_support' => true,
         ]);
 
         $this->artisan('make:plugin', [
             'name' => 'AutoPlugin',
-            '--view-type' => 'auto'
+            '--view-type' => 'auto',
         ])
             ->expectsOutputToContain('View type: volt')
             ->assertExitCode(0);
@@ -92,12 +91,12 @@ class MakePluginCommandTest extends TestCase
     {
         config([
             'laravel-plugin-system.default_view_type' => 'volt',
-            'laravel-plugin-system.enable_volt_support' => false
+            'laravel-plugin-system.enable_volt_support' => false,
         ]);
 
         $this->artisan('make:plugin', [
             'name' => 'AutoBladePlugin',
-            '--view-type' => 'auto'
+            '--view-type' => 'auto',
         ])
             ->expectsOutputToContain('View type: blade')
             ->assertExitCode(0);
@@ -116,7 +115,7 @@ class MakePluginCommandTest extends TestCase
     {
         $this->artisan('make:plugin', [
             'name' => 'InvalidPlugin',
-            '--view-type' => 'invalid'
+            '--view-type' => 'invalid',
         ])
             ->expectsOutputToContain('Invalid view type \'invalid\'. Available options: volt, blade, auto')
             ->assertExitCode(1);
@@ -127,8 +126,8 @@ class MakePluginCommandTest extends TestCase
         $this->artisan('make:plugin', ['name' => 'ConfigTestPlugin'])
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/ConfigTestPlugin';
-        $config = require $pluginPath . '/config.php';
+        $pluginPath = $this->getTestPluginsPath().'/ConfigTestPlugin';
+        $config = require $pluginPath.'/config.php';
 
         $this->assertEquals('ConfigTestPlugin', $config['name']);
         $this->assertEquals('1.0.0', $config['version']);
@@ -141,8 +140,8 @@ class MakePluginCommandTest extends TestCase
         $this->artisan('make:plugin', ['name' => 'ControllerTestPlugin'])
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/ControllerTestPlugin';
-        $controllerContent = File::get($pluginPath . '/Controllers/ControllerTestPluginController.php');
+        $pluginPath = $this->getTestPluginsPath().'/ControllerTestPlugin';
+        $controllerContent = File::get($pluginPath.'/Controllers/ControllerTestPluginController.php');
 
         $this->assertStringContainsString('namespace Tests\\Fixtures\\Plugins\\ControllerTestPlugin\\Controllers;', $controllerContent);
         $this->assertStringContainsString('class ControllerTestPluginController extends Controller', $controllerContent);
@@ -154,10 +153,10 @@ class MakePluginCommandTest extends TestCase
         $this->artisan('make:plugin', ['name' => 'ServiceTestPlugin'])
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/ServiceTestPlugin';
+        $pluginPath = $this->getTestPluginsPath().'/ServiceTestPlugin';
 
-        $interfaceContent = File::get($pluginPath . '/Services/ServiceTestPluginServiceInterface.php');
-        $serviceContent = File::get($pluginPath . '/Services/ServiceTestPluginService.php');
+        $interfaceContent = File::get($pluginPath.'/Services/ServiceTestPluginServiceInterface.php');
+        $serviceContent = File::get($pluginPath.'/Services/ServiceTestPluginService.php');
 
         $this->assertStringContainsString('interface ServiceTestPluginServiceInterface', $interfaceContent);
         $this->assertStringContainsString('public function handle(): array;', $interfaceContent);
@@ -173,12 +172,12 @@ class MakePluginCommandTest extends TestCase
 
         $this->artisan('make:plugin', [
             'name' => 'VoltRoutesPlugin',
-            '--view-type' => 'volt'
+            '--view-type' => 'volt',
         ])
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/VoltRoutesPlugin';
-        $routesContent = File::get($pluginPath . '/routes.php');
+        $pluginPath = $this->getTestPluginsPath().'/VoltRoutesPlugin';
+        $routesContent = File::get($pluginPath.'/routes.php');
 
         $this->assertStringContainsString('use Livewire\\Volt\\Volt;', $routesContent);
         $this->assertStringContainsString('Volt::route(\'/\', \'index\');', $routesContent);
@@ -188,12 +187,12 @@ class MakePluginCommandTest extends TestCase
     {
         $this->artisan('make:plugin', [
             'name' => 'BladeRoutesPlugin',
-            '--view-type' => 'blade'
+            '--view-type' => 'blade',
         ])
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/BladeRoutesPlugin';
-        $routesContent = File::get($pluginPath . '/routes.php');
+        $pluginPath = $this->getTestPluginsPath().'/BladeRoutesPlugin';
+        $routesContent = File::get($pluginPath.'/routes.php');
 
         $this->assertStringContainsString('use Illuminate\\Support\\Facades\\Route;', $routesContent);
         $this->assertStringContainsString('Route::get(\'/\', function () {', $routesContent);
@@ -206,19 +205,19 @@ class MakePluginCommandTest extends TestCase
             ->expectsOutputToContain('Creating plugin: MyAwesomePlugin')
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/MyAwesomePlugin';
+        $pluginPath = $this->getTestPluginsPath().'/MyAwesomePlugin';
         $this->assertDirectoryExists($pluginPath);
     }
 
     public function test_uses_custom_plugins_path_from_config()
     {
-        $customPath = $this->getTestPluginsPath() . '/Custom';
+        $customPath = $this->getTestPluginsPath().'/Custom';
         config(['laravel-plugin-system.plugins_path' => $customPath]);
 
         $this->artisan('make:plugin', ['name' => 'CustomPathPlugin'])
             ->assertExitCode(0);
 
-        $this->assertDirectoryExists($customPath . '/CustomPathPlugin');
+        $this->assertDirectoryExists($customPath.'/CustomPathPlugin');
     }
 
     public function test_uses_custom_plugin_namespace_from_config()
@@ -228,8 +227,8 @@ class MakePluginCommandTest extends TestCase
         $this->artisan('make:plugin', ['name' => 'CustomNamespacePlugin'])
             ->assertExitCode(0);
 
-        $pluginPath = $this->getTestPluginsPath() . '/CustomNamespacePlugin';
-        $controllerContent = File::get($pluginPath . '/Controllers/CustomNamespacePluginController.php');
+        $pluginPath = $this->getTestPluginsPath().'/CustomNamespacePlugin';
+        $controllerContent = File::get($pluginPath.'/Controllers/CustomNamespacePluginController.php');
 
         $this->assertStringContainsString('namespace Custom\\Namespace\\CustomNamespacePlugin\\Controllers;', $controllerContent);
     }

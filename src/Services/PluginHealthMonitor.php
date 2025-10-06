@@ -2,11 +2,11 @@
 
 namespace SoysalTan\LaravelPluginSystem\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use SoysalTan\LaravelPluginSystem\Contracts\PluginHealthMonitorInterface;
-use Carbon\Carbon;
 
 class PluginHealthMonitor implements PluginHealthMonitorInterface
 {
@@ -19,18 +19,19 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
     ];
 
     protected string $cachePrefix = 'plugin_health_';
+
     protected int $cacheTtl = 300; // 5 minutes
 
     public function checkPluginHealth(string $pluginName): array
     {
-        $cacheKey = $this->cachePrefix . 'check_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'check_'.$pluginName;
 
         return Cache::remember($cacheKey, $this->cacheTtl, function () use ($pluginName) {
             $metrics = $this->getPluginMetrics($pluginName);
             $errors = $this->getPluginErrors($pluginName, 5);
             $uptime = $this->getPluginUptime($pluginName);
 
-            $health = [
+            return [
                 'plugin_name' => $pluginName,
                 'status' => $this->determineHealthStatus($metrics, $errors),
                 'uptime' => $uptime,
@@ -39,8 +40,6 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
                 'recent_errors' => $errors,
                 'recommendations' => $this->generateRecommendations($metrics, $errors),
             ];
-
-            return $health;
         });
     }
 
@@ -68,7 +67,7 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
     public function getPluginMetrics(string $pluginName): array
     {
-        $cacheKey = $this->cachePrefix . 'metrics_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'metrics_'.$pluginName;
 
         return Cache::get($cacheKey, [
             'memory_usage' => 0,
@@ -87,6 +86,7 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
     public function isPluginHealthy(string $pluginName): bool
     {
         $health = $this->checkPluginHealth($pluginName);
+
         return $health['status'] === 'healthy';
     }
 
@@ -105,7 +105,7 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
     public function getPluginErrors(string $pluginName, int $limit = 10): array
     {
-        $cacheKey = $this->cachePrefix . 'errors_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'errors_'.$pluginName;
         $errors = Cache::get($cacheKey, []);
 
         return array_slice($errors, 0, $limit);
@@ -113,13 +113,13 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
     public function clearPluginErrors(string $pluginName): void
     {
-        $cacheKey = $this->cachePrefix . 'errors_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'errors_'.$pluginName;
         Cache::forget($cacheKey);
     }
 
     public function getPluginUptime(string $pluginName): float
     {
-        $cacheKey = $this->cachePrefix . 'uptime_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'uptime_'.$pluginName;
 
         $uptimeData = Cache::get($cacheKey, [
             'start_time' => now(),
@@ -134,7 +134,7 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
     public function recordPluginError(string $pluginName, \Throwable $exception): void
     {
-        $cacheKey = $this->cachePrefix . 'errors_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'errors_'.$pluginName;
         $errors = Cache::get($cacheKey, []);
 
         $errorData = [
@@ -158,7 +158,7 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
         // Log critical errors
         if ($errorData['severity'] === 'critical') {
-            Log::critical("Plugin {$pluginName} critical error: " . $exception->getMessage(), [
+            Log::critical("Plugin {$pluginName} critical error: ".$exception->getMessage(), [
                 'plugin' => $pluginName,
                 'exception' => $exception,
             ]);
@@ -167,7 +167,7 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
     public function recordPluginMetric(string $pluginName, string $metric, $value): void
     {
-        $cacheKey = $this->cachePrefix . 'metrics_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'metrics_'.$pluginName;
         $metrics = Cache::get($cacheKey, []);
 
         $metrics[$metric] = $value;
@@ -221,22 +221,25 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
         $warningIssues = 0;
 
         // Check memory usage
-        if ($metrics['memory_usage'] > $this->healthThresholds['memory_usage']) {
+        $memoryUsage = $metrics['memory_usage'] ?? 0;
+        if ($memoryUsage > $this->healthThresholds['memory_usage']) {
             $criticalIssues++;
-        } elseif ($metrics['memory_usage'] > $this->healthThresholds['memory_usage'] * 0.8) {
+        } elseif ($memoryUsage > $this->healthThresholds['memory_usage'] * 0.8) {
             $warningIssues++;
         }
 
         // Check execution time
-        if ($metrics['execution_time'] > $this->healthThresholds['execution_time']) {
+        $executionTime = $metrics['execution_time'] ?? 0;
+        if ($executionTime > $this->healthThresholds['execution_time']) {
             $criticalIssues++;
-        } elseif ($metrics['execution_time'] > $this->healthThresholds['execution_time'] * 0.8) {
+        } elseif ($executionTime > $this->healthThresholds['execution_time'] * 0.8) {
             $warningIssues++;
         }
 
         // Check error rate
-        $totalRequests = max(1, $metrics['request_count']);
-        $errorRate = $metrics['error_count'] / $totalRequests;
+        $totalRequests = max(1, $metrics['request_count'] ?? 0);
+        $errorCount = $metrics['error_count'] ?? 0;
+        $errorRate = $errorCount / $totalRequests;
 
         if ($errorRate > $this->healthThresholds['error_rate']) {
             $criticalIssues++;
@@ -267,11 +270,13 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
     {
         $recommendations = [];
 
-        if ($metrics['memory_usage'] > $this->healthThresholds['memory_usage'] * 0.8) {
+        $memoryUsage = $metrics['memory_usage'] ?? 0;
+        if ($memoryUsage > $this->healthThresholds['memory_usage'] * 0.8) {
             $recommendations[] = 'Consider optimizing memory usage or increasing memory limits';
         }
 
-        if ($metrics['execution_time'] > $this->healthThresholds['execution_time'] * 0.8) {
+        $executionTime = $metrics['execution_time'] ?? 0;
+        if ($executionTime > $this->healthThresholds['execution_time'] * 0.8) {
             $recommendations[] = 'Optimize slow operations or implement caching';
         }
 
@@ -279,7 +284,8 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
             $recommendations[] = 'Review and fix recurring errors';
         }
 
-        if ($metrics['database_queries'] > 50) {
+        $databaseQueries = $metrics['database_queries'] ?? 0;
+        if ($databaseQueries > 50) {
             $recommendations[] = 'Consider optimizing database queries or implementing query caching';
         }
 
@@ -301,7 +307,7 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
     protected function incrementMetric(string $pluginName, string $metric): void
     {
-        $cacheKey = $this->cachePrefix . 'metrics_' . $pluginName;
+        $cacheKey = $this->cachePrefix.'metrics_'.$pluginName;
         $metrics = Cache::get($cacheKey, []);
 
         $metrics[$metric] = ($metrics[$metric] ?? 0) + 1;
@@ -311,6 +317,6 @@ class PluginHealthMonitor implements PluginHealthMonitorInterface
 
     protected function isPluginEnabled(string $pluginName): bool
     {
-        return (bool)config("{$pluginName}.enabled", true);
+        return (bool) config("{$pluginName}.enabled", true);
     }
 }

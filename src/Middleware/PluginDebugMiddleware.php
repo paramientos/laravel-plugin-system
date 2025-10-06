@@ -54,6 +54,7 @@ class PluginDebugMiddleware
         }
 
         $debugRoutes = config('laravel-plugin-system.debug.routes', []);
+
         if (!empty($debugRoutes)) {
             $currentRoute = $request->route()?->getName();
             return in_array($currentRoute, $debugRoutes);
@@ -140,7 +141,7 @@ class PluginDebugMiddleware
     protected function sanitizeHeaders(array $headers): array
     {
         $sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'x-auth-token'];
-        
+
         foreach ($headers as $key => $value) {
             if (in_array(strtolower($key), $sensitiveHeaders)) {
                 $headers[$key] = '[REDACTED]';
@@ -153,7 +154,7 @@ class PluginDebugMiddleware
     protected function sanitizeInput(array $input): array
     {
         $sensitiveFields = ['password', 'password_confirmation', 'token', 'api_key', 'secret'];
-        
+
         foreach ($input as $key => $value) {
             if (in_array(strtolower($key), $sensitiveFields)) {
                 $input[$key] = '[REDACTED]';
@@ -182,7 +183,7 @@ class PluginDebugMiddleware
     {
         $cacheKey = 'plugin_debug_' . $this->debugData['request_id'];
         $ttl = config('laravel-plugin-system.debug.cache_ttl', 3600);
-        
+
         Cache::put($cacheKey, $this->debugData, $ttl);
 
         $this->storeDebugHistory();
@@ -192,7 +193,7 @@ class PluginDebugMiddleware
     {
         $historyKey = 'plugin_debug_history';
         $history = Cache::get($historyKey, []);
-        
+
         $history[] = [
             'request_id' => $this->debugData['request_id'],
             'timestamp' => $this->debugData['timestamp'],
@@ -218,7 +219,7 @@ class PluginDebugMiddleware
         $response->headers->set('X-Plugin-Debug-Execution-Time', $this->debugData['performance']['execution_time_ms'] . 'ms');
         $response->headers->set('X-Plugin-Debug-Memory-Usage', $this->debugData['performance']['memory_usage_mb'] . 'MB');
         $response->headers->set('X-Plugin-Debug-Query-Count', $this->debugData['performance']['query_count']);
-        
+
         if (!empty($this->debugData['plugins'])) {
             $response->headers->set('X-Plugin-Debug-Plugins', implode(',', $this->debugData['plugins']));
         }
@@ -227,7 +228,7 @@ class PluginDebugMiddleware
     protected function logDebugInfo(string $message, array $data): void
     {
         $logChannel = config('laravel-plugin-system.debug.log_channel', 'single');
-        
+
         Log::channel($logChannel)->info($message, [
             'request_id' => $data['request_id'],
             'url' => $data['url'],
@@ -252,17 +253,17 @@ class PluginDebugMiddleware
     public static function clearDebugHistory(): void
     {
         Cache::forget('plugin_debug_history');
-        
+
         try {
             $pluginsPath = config('laravel-plugin-system.plugins_path', app_path('Plugins'));
             $pluginDirectories = \Illuminate\Support\Facades\File::directories($pluginsPath);
-            
+
             foreach ($pluginDirectories as $pluginDir) {
                 $pluginName = basename($pluginDir);
                 $cacheKey = 'plugin_debug_' . $pluginName;
                 Cache::forget($cacheKey);
             }
-            
+
             for ($i = 0; $i < 1000; $i++) {
                 $cacheKey = 'plugin_debug_req_' . str_pad($i, 6, '0', STR_PAD_LEFT);
                 if (!Cache::has($cacheKey)) {

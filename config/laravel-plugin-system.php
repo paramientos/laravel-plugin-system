@@ -176,4 +176,85 @@ return [
             'ttl' => env('PLUGIN_HEALTH_CACHE_TTL', 3600), // 1 hour
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Debug Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for plugin debugging and profiling tools.
+    |
+    */
+    'debug' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Enable Debug Mode
+        |--------------------------------------------------------------------------
+        |
+        | Whether to enable plugin debugging features.
+        | This should be disabled in production.
+        |
+        */
+        'enabled' => env('PLUGIN_DEBUG_ENABLED', env('APP_DEBUG', false)),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Debug Routes
+        |--------------------------------------------------------------------------
+        |
+        | Specific routes that should trigger debug middleware.
+        | Leave empty to debug all routes when debug headers/params are present.
+        |
+        */
+        'routes' => [
+            // 'plugin.example.index',
+            // 'plugin.*.show',
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Profiling Configuration
+        |--------------------------------------------------------------------------
+        |
+        | Settings for plugin profiling and performance analysis.
+        |
+        */
+        'profiling' => [
+            'enabled' => env('PLUGIN_PROFILING_ENABLED', true),
+            'memory_tracking' => env('PLUGIN_PROFILING_MEMORY', true),
+            'query_tracking' => env('PLUGIN_PROFILING_QUERIES', true),
+            'slow_query_threshold' => env('PLUGIN_SLOW_QUERY_THRESHOLD', 100), // milliseconds
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Logging Configuration
+        |--------------------------------------------------------------------------
+        |
+        | Settings for debug logging.
+        |
+        */
+        'logging' => [
+            'enabled' => env('PLUGIN_DEBUG_LOGGING', true),
+            'log_channel' => env('PLUGIN_DEBUG_LOG_CHANNEL', 'single'),
+            'log_requests' => env('PLUGIN_DEBUG_LOG_REQUESTS', true),
+            'log_responses' => env('PLUGIN_DEBUG_LOG_RESPONSES', true),
+            'sanitize_sensitive_data' => env('PLUGIN_DEBUG_SANITIZE', true),
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cache Configuration
+        |--------------------------------------------------------------------------
+        |
+        | Settings for debug data caching.
+        |
+        */
+        'cache' => [
+            'enabled' => env('PLUGIN_DEBUG_CACHE', true),
+            'cache_ttl' => env('PLUGIN_DEBUG_CACHE_TTL', 3600), // 1 hour
+            'max_history' => env('PLUGIN_DEBUG_MAX_HISTORY', 100),
+            'max_entries' => env('PLUGIN_DEBUG_MAX_ENTRIES', 1000),
+        ],
+    ],
 ];

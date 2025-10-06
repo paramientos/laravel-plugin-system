@@ -67,7 +67,7 @@ class PluginDebugCommand extends Command
         $this->newLine();
 
         $pluginsPath = config('laravel-plugin-system.plugins_path', app_path('Plugins'));
-        
+
         if (!File::exists($pluginsPath)) {
             $this->error('Plugins directory not found!');
             return 1;
@@ -84,8 +84,11 @@ class PluginDebugCommand extends Command
 
         foreach ($plugins as $plugin) {
             $this->line("Debugging: {$plugin}");
+
             $debugData = $this->collectDebugData($plugin);
+
             $this->displaySummaryResults($plugin, $debugData);
+
             $this->newLine();
         }
 
@@ -100,7 +103,7 @@ class PluginDebugCommand extends Command
         try {
             while (true) {
                 $this->line('[' . now()->format('H:i:s') . '] Collecting debug data...');
-                
+
                 if ($pluginName) {
                     $debugData = $this->collectDebugData($pluginName);
                     $this->displayWatchResults($pluginName, $debugData);
@@ -131,7 +134,7 @@ class PluginDebugCommand extends Command
 
         try {
             $pluginData = $this->getPluginInformation($pluginName);
-            
+
             if ($this->option('trace')) {
                 $traceData = $this->collectTraceData($pluginName);
                 $pluginData['trace'] = $traceData;
@@ -141,7 +144,7 @@ class PluginDebugCommand extends Command
                 $queries = DB::getQueryLog();
                 $queryCount = count($queries);
                 $slowQueryThreshold = (int) $this->option('slow-queries');
-                
+
                 $slowQueries = collect($queries)
                     ->filter(fn($query) => $query['time'] > $slowQueryThreshold)
                     ->values()
@@ -208,7 +211,7 @@ class PluginDebugCommand extends Command
     protected function collectTraceData(string $pluginName): array
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 10);
-        
+
         return collect($trace)
             ->map(function ($item) {
                 return [
@@ -270,11 +273,11 @@ class PluginDebugCommand extends Command
     {
         $services = [];
         $namespace = config('laravel-plugin-system.plugin_namespace', 'App\\Plugins') . '\\' . $pluginName . '\\Services';
-        
+
         try {
             $serviceInterface = $namespace . '\\' . $pluginName . 'ServiceInterface';
             $serviceClass = $namespace . '\\' . $pluginName . 'Service';
-            
+
             if (app()->bound($serviceInterface)) {
                 $services[] = [
                     'interface' => $serviceInterface,
@@ -385,7 +388,7 @@ class PluginDebugCommand extends Command
         $memory = $debugData['memory_usage']['peak'];
         $time = $debugData['execution_time'];
         $queries = $debugData['query_count'];
-        
+
         $this->line("  {$status} {$pluginName} | {$time}ms | {$memory} | {$queries} queries");
     }
 
@@ -393,7 +396,7 @@ class PluginDebugCommand extends Command
     {
         $status = isset($debugData['plugin_data']['error']) ? '❌ ERROR' : '✅ OK';
         $this->line("[{$pluginName}] {$status} | {$debugData['execution_time']}ms | {$debugData['memory_usage']['peak']} | {$debugData['query_count']} queries");
-        
+
         if (isset($debugData['plugin_data']['error'])) {
             $this->error("  Error: {$debugData['plugin_data']['error']}");
         }
@@ -407,7 +410,7 @@ class PluginDebugCommand extends Command
 
     protected function isPluginEnabled(string $pluginName): bool
     {
-        return (bool) config("{$pluginName}.enabled", true);
+        return (bool) config("{$pluginName}.enabled", false);
     }
 
     protected function formatBytes(int $bytes): string
@@ -416,9 +419,9 @@ class PluginDebugCommand extends Command
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
-        
+
         $bytes /= (1 << (10 * $pow));
-        
+
         return round($bytes, 2) . ' ' . $units[$pow];
     }
 }

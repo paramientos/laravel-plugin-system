@@ -79,26 +79,6 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Health Check Interval
-        |--------------------------------------------------------------------------
-        |
-        | How often to run health checks (in minutes).
-        |
-        */
-        'check_interval' => env('PLUGIN_HEALTH_CHECK_INTERVAL', 5),
-
-        /*
-        |--------------------------------------------------------------------------
-        | Metrics Retention
-        |--------------------------------------------------------------------------
-        |
-        | How long to keep health metrics (in days).
-        |
-        */
-        'metrics_retention_days' => env('PLUGIN_HEALTH_METRICS_RETENTION', 30),
-
-        /*
-        |--------------------------------------------------------------------------
         | Health Thresholds
         |--------------------------------------------------------------------------
         |
@@ -194,20 +174,6 @@ return [
         'cache' => [
             'prefix' => 'plugin_health_',
             'ttl' => env('PLUGIN_HEALTH_CACHE_TTL', 3600), // 1 hour
-        ],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Auto Recovery
-        |--------------------------------------------------------------------------
-        |
-        | Automatic recovery settings for failed plugins.
-        |
-        */
-        'auto_recovery' => [
-            'enabled' => env('PLUGIN_HEALTH_AUTO_RECOVERY', false),
-            'max_attempts' => env('PLUGIN_HEALTH_RECOVERY_ATTEMPTS', 3),
-            'retry_delay_minutes' => env('PLUGIN_HEALTH_RETRY_DELAY', 5),
         ],
     ],
 ];

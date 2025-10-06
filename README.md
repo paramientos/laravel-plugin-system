@@ -365,15 +365,6 @@ The monitoring system provides multi-channel alerts:
 - **Slack Integration** - Real-time Slack notifications
 - **Custom Channels** - Extensible alert system for custom integrations
 
-#### Automatic Recovery
-
-When enabled, the system can automatically:
-
-- Restart failed plugins
-- Clear temporary files and caches
-- Reset plugin configurations
-- Disable problematic plugins temporarily
-
 ### Health Monitoring Configuration
 
 Configure health monitoring in `config/laravel-plugin-system.php`:
@@ -404,12 +395,6 @@ Configure health monitoring in `config/laravel-plugin-system.php`:
             'channel' => '#alerts',
         ],
     ],
-    
-    'auto_recovery' => [
-        'enabled' => false,
-        'max_attempts' => 3,
-        'recovery_actions' => ['restart', 'clear_cache'],
-    ],
 ],
 ```
 
@@ -429,4 +414,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-If you discover any security vulnerabilities or bugs, please send an e-mail to the maintainer.
+If you discover any security vulnerabilities or bugs, please send an e-mail to soysaltan@hotmail.it

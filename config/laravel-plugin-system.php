@@ -195,19 +195,5 @@ return [
             'prefix' => 'plugin_health_',
             'ttl' => env('PLUGIN_HEALTH_CACHE_TTL', 3600), // 1 hour
         ],
-
-        /*
-        |--------------------------------------------------------------------------
-        | Auto Recovery
-        |--------------------------------------------------------------------------
-        |
-        | Automatic recovery settings for failed plugins.
-        |
-        */
-        'auto_recovery' => [
-            'enabled' => env('PLUGIN_HEALTH_AUTO_RECOVERY', false),
-            'max_attempts' => env('PLUGIN_HEALTH_RECOVERY_ATTEMPTS', 3),
-            'retry_delay_minutes' => env('PLUGIN_HEALTH_RETRY_DELAY', 5),
-        ],
     ],
 ];

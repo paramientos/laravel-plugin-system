@@ -11,10 +11,10 @@ An extensive Laravel plugin system that provides automatic registration of route
 -  **View Integration** - Seamless integration with Laravel views and Livewire Volt
 - ️ **Config Management** - Automatic configuration loading and merging
 -  **Plugin Generator** - Artisan command to create new plugins with boilerplate code
-- 📊 **Health Monitoring** - Real-time plugin health monitoring with metrics, alerts, and automatic recovery
-- 🔍 **Performance Tracking** - Monitor memory usage, execution time, error rates, and database queries
-- 🚨 **Alert System** - Multi-channel alerts (log, email, Slack) for plugin issues
-- 🛠️ **Health Commands** - Artisan commands for health checks and error management
+-  **Health Monitoring** - Real-time plugin health monitoring with metrics, alerts, and automatic recovery
+-  **Performance Tracking** - Monitor memory usage, execution time, error rates, and database queries
+-  **Alert System** - Multi-channel alerts (log, email, Slack) for plugin issues
+-  **Health Commands** - Artisan commands for health checks and error management
 
 ## Installation
 
@@ -76,12 +76,6 @@ return [
                 'webhook_url' => env('SLACK_WEBHOOK_URL'),
                 'channel' => '#alerts',
             ],
-        ],
-        
-        'auto_recovery' => [
-            'enabled' => false,
-            'max_attempts' => 3,
-            'recovery_actions' => ['restart', 'clear_cache'],
         ],
     ],
 ];

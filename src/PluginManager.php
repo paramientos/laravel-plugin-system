@@ -29,7 +29,6 @@ class PluginManager
         $this->registerPluginConfigs();
         $this->registerPluginServices();
         $this->registerPluginProviders();
-        $this->callLifecycleHook('register');
     }
 
     public function boot(): void
@@ -39,7 +38,6 @@ class PluginManager
         $this->registerPluginControllers();
         $this->registerPluginCommands();
         $this->registerPluginEvents();
-        $this->callLifecycleHook('boot');
     }
 
     protected function callLifecycleHook(string $method): void

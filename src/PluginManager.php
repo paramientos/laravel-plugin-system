@@ -12,6 +12,8 @@ class PluginManager
 {
     public static bool $usePluginsPrefixInRoutes = false;
 
+    private string $ds = DIRECTORY_SEPARATOR;
+
     protected string $pluginsPath;
 
     protected Application $app;
@@ -26,7 +28,8 @@ class PluginManager
     {
         $this->registerPluginConfigs();
         $this->registerPluginServices();
-        $this->callLifecycleHook('onRegister');
+        $this->registerPluginProviders();
+        $this->callLifecycleHook('register');
     }
 
     public function boot(): void
@@ -36,7 +39,7 @@ class PluginManager
         $this->registerPluginControllers();
         $this->registerPluginCommands();
         $this->registerPluginEvents();
-        $this->callLifecycleHook('onBoot');
+        $this->callLifecycleHook('boot');
     }
 
     protected function callLifecycleHook(string $method): void
@@ -54,10 +57,10 @@ class PluginManager
                 continue;
             }
 
-            $serviceProviderPath = $pluginDir . '/ServiceProvider.php';
+            $serviceProviderPath = $pluginDir . $this->ds . "{$pluginName}Provider.php";
 
             if (File::exists($serviceProviderPath)) {
-                $namespace = $this->getPluginNamespace($pluginName) . '\\ServiceProvider';
+                $namespace = $this->getPluginNamespace($pluginName) . "\\{$pluginName}Provider";
 
                 if (class_exists($namespace)) {
                     $serviceProvider = new $namespace($this->app);
@@ -225,10 +228,8 @@ class PluginManager
             $viewsPath = $pluginDir . '/Views';
 
             if (File::exists($viewsPath)) {
-                $pluginName = strtolower($pluginName);
-
                 View::addLocation($viewsPath);
-                View::addNamespace("plugins.{$pluginName}", $viewsPath);
+                View::addNamespace("{$pluginName}", $viewsPath);
 
                 if (config('laravel-plugin-system.enable_volt_support', true) && class_exists('Livewire\\Volt\\Volt')) {
                     call_user_func(['Livewire\\Volt\\Volt', 'mount'], $viewsPath);
@@ -326,6 +327,33 @@ class PluginManager
                     if (class_exists($namespace)) {
                         $this->app->bind($namespace, $namespace);
                     }
+                }
+            }
+        }
+    }
+
+    protected function registerPluginProviders(): void
+    {
+        if (!File::exists($this->pluginsPath)) {
+            return;
+        }
+
+        $pluginDirectories = File::directories($this->pluginsPath);
+
+        foreach ($pluginDirectories as $pluginDir) {
+            $pluginName = basename($pluginDir);
+
+            if (!$this->isPluginEnabled($pluginName)) {
+                continue;
+            }
+
+            $providerFile = $pluginDir . '/' . $pluginName . 'Provider.php';
+
+            if (File::exists($providerFile)) {
+                $namespace = $this->getPluginNamespace($pluginName) . '\\' . $pluginName . 'Provider';
+
+                if (class_exists($namespace)) {
+                    $this->app->register($namespace);
                 }
             }
         }

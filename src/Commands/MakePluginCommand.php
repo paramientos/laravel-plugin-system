@@ -93,9 +93,7 @@ class MakePluginCommand extends Command
         ];
 
         foreach ($directories as $directory) {
-            !File::exists($directory) && File::makeDirectory($directory, 0755, true);
-
-            $this->line('Created directory: ' . basename($directory));
+            !File::exists($directory) && File::makeDirectory($directory, 0755, true) && $this->line('Created directory: ' . basename($directory));
         }
     }
 
@@ -200,6 +198,7 @@ Route::get('/', function () {
         }
 
         $filePath = $pluginPath . '/Controllers/' . $fileName;
+
         if (File::exists($filePath)) {
             $this->warn("Controller file '{$fileName}' already exists in plugin '{$pluginName}'. Skipping...");
             return;
@@ -287,7 +286,12 @@ class {$pluginName}Controller extends Controller
         }
 
         File::put($pluginPath . '/Controllers/' . $fileName, $content);
+
         $this->line("Created: {$fileName}");
+
+        if ($this->option('route')) {
+            $this->createRouteFile($pluginPath, $pluginName, $controllerName);
+        }
     }
 
     protected function createServiceFile(string $pluginPath, string $pluginName): void
@@ -660,7 +664,7 @@ enum $enumName : string
         $this->line("Created enum: {$filePath}");
     }
 
-    protected function createConcernFile(string $pluginPath, string $pluginName,string $trait): void
+    protected function createConcernFile(string $pluginPath, string $pluginName, string $trait): void
     {
         $filePath = "{$pluginPath}/Concerns/{$trait}.php";
         $traitName = ucfirst($trait);
@@ -733,11 +737,6 @@ trait $traitName
             $this->createViewFile($pluginPath, $pluginName, $viewType, $this->option('view'));
         }
 
-        if ($this->option('route')) {
-            $controllerName = $this->option('controller') ?? $pluginName;
-            $this->createRouteFile($pluginPath, $pluginName, $controllerName);
-        }
-
         if ($this->option('enum')) {
             $this->createEnumFile($pluginPath, $pluginName, $this->option('enum'));
         }
@@ -755,15 +754,20 @@ trait $traitName
         $filePath = $pluginPath . '/' . $fileName;
 
         $pluginNameLower = strtolower($pluginName);
-        $controllerClass = $controllerName . 'Controller';
+
+        if (str_ends_with($controllerName, 'Controller')) {
+            $controllerClass = Str::studly($controllerName);
+        } else {
+            $controllerClass = Str::studly("{$controllerName}Controller");
+        }
 
         $newRoutes = "
 Route::controller({$controllerClass}::class)->group(function () {
     Route::get('/', 'index')->name('{$pluginNameLower}.index');
     Route::post('/',  'store')->name('{$pluginNameLower}.store');
-    Route::get('/{{id}}', 'show')->name('{$pluginNameLower}.show');
-    Route::put('/{{id}}', 'update')->name('{$pluginNameLower}.update');
-    Route::delete('/{{id}}', 'destroy')->name('{$pluginNameLower}.destroy');
+    Route::get('/{id}', 'show')->name('{$pluginNameLower}.show');
+    Route::put('/{id}', 'update')->name('{$pluginNameLower}.update');
+    Route::delete('/{id}', 'destroy')->name('{$pluginNameLower}.destroy');
 });";
 
         if (File::exists($filePath)) {

@@ -75,9 +75,6 @@ class PluginManager
     {
         return [
             Commands\MakePluginCommand::class,
-            Commands\PluginHealthCommand::class,
-            Commands\PluginDebugCommand::class,
-            Commands\PluginLogViewerCommand::class,
         ];
     }
 
